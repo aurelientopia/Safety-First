@@ -139,6 +139,7 @@ void ASafetyFirstPawn::Tick(float _fDt)
 					FDetachmentTransformRules detachmentRules(/*InLocationRule*/EDetachmentRule::KeepWorld, /*InRotationRule*/EDetachmentRule::KeepWorld, /*InScaleRule*/EDetachmentRule::KeepWorld, /*bInCallModify*/true);
 					m_Weapon->DetachFromActor(detachmentRules);
 					m_Weapon->SetWeaponOwner(nullptr);
+					m_OnFire.Broadcast(m_Weapon.Get(), m_vFireDirection);
 					m_Weapon->RecoilLauncher(m_vFireDirection);
 					vRecoil = m_vFireDirection * m_Weapon->GetRecoilPower()*-1.0f;
 					m_Weapon = nullptr;

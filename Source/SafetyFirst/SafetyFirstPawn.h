@@ -64,6 +64,11 @@ public:
 	UPROPERTY(EditAnywhere, meta = (Category = "Safety First ", DisplayName = "deadZone right stick"))
 	float m_fDeadZoneRightStick = 0.2f;
 
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnFire, ASafetyFirstWeapon*, _WeaponLaunched, FVector, _vFireDirection);
+
+	UPROPERTY(BlueprintAssignable, Category = Fire)
+	FOnFire m_OnFire;
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "Spawn")
 	void BPE_Fire(ASafetyFirstWeapon* _WeaponLaunched, FVector _vFireDirection);
 
