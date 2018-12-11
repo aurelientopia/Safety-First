@@ -140,8 +140,8 @@ void ASafetyFirstPawn::Tick(float _fDt)
 					m_Weapon->DetachFromActor(detachmentRules);
 					m_Weapon->SetWeaponOwner(nullptr);
 					m_Weapon->RecoilLauncher(m_vFireDirection);
-					m_Weapon = nullptr;
 					vRecoil = m_vFireDirection * m_Weapon->GetRecoilPower()*-1.0f;
+					m_Weapon = nullptr;
 				}
 			}
 		}
@@ -155,7 +155,7 @@ void ASafetyFirstPawn::Tick(float _fDt)
 	const FVector MoveDirection = FVector(ForwardValue, RightValue, 0.f).GetClampedToMaxSize(1.0f);
 
 	// Calculate  movement
-	m_Movement = FMath::Lerp(m_Movement, (MoveDirection * MoveSpeed + vRecoil) * fDt, MoveSpeedLerp);
+	m_Movement = FMath::Lerp(m_Movement, (MoveDirection * MoveSpeed + vRecoil) * _fDt, MoveSpeedLerp);
 
 	
 

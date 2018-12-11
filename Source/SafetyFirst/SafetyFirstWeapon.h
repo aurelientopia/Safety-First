@@ -59,7 +59,7 @@ public :
 	UCurveFloat* m_RecoilDynamic = nullptr;
 	
 	UPROPERTY(Category = Recoil, EditAnywhere, BlueprintReadOnly)
-	float m_fRecoilDistance = 1000.0f;
+	float m_fRecoilDistance = 1500.0f;
 
 	UPROPERTY(Category = Recoil, EditAnywhere, BlueprintReadOnly)
 	float m_fRecoilDuration = 1.0f;
