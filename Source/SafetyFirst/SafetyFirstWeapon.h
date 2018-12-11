@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "SafetyFirstProjectile.h"
 #include "SafetyFirstWeapon.generated.h"
 
 class UProjectileMovementComponent;
@@ -23,6 +24,8 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
 	USceneComponent* m_FirePositionStartComponent;
 
+	UPROPERTY(EditAnywhere, meta = (Category = "Safety First ", DisplayName = "projectile class"))
+	TSubclassOf<ASafetyFirstProjectile> m_ProjectileClass;
 
 	int32 m_iNbMaxBullets = 0;
 
