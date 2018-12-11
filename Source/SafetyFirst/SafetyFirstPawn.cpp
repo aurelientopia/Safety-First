@@ -101,6 +101,7 @@ void ASafetyFirstPawn::BeginPlay()
 
 void ASafetyFirstPawn::Tick(float DeltaSeconds)
 {
+	Super::Tick(DeltaSeconds);
 	//UE_LOG(LogTemp, Warning, TEXT("test "));
 	// Find movement direction
 	const float ForwardValue = GetInputAxisValue(MoveForwardBinding);
