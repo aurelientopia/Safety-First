@@ -134,7 +134,7 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 				if (bWeaponEjected)
 				{
 					m_Weapon->RecoilLauncher(m_vFireDirection);
-					m_Weapon = nullptr;
+					//m_Weapon = nullptr;
 				}
 			}
 		}
