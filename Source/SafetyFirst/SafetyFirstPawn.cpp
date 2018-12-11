@@ -18,7 +18,7 @@ const FName ASafetyFirstPawn::MoveRightBinding("MoveRight");
 const FName ASafetyFirstPawn::FireForwardBinding("FireForward");
 const FName ASafetyFirstPawn::FireRightBinding("FireRight");
 const FName ASafetyFirstPawn::FireBinding("Fire");
-
+const FName ASafetyFirstPawn::PickUpBinding("PickUp");
 
 
 ASafetyFirstPawn::ASafetyFirstPawn()
@@ -79,8 +79,9 @@ void ASafetyFirstPawn::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	PlayerInputComponent->BindAxis(FireForwardBinding);
 	PlayerInputComponent->BindAxis(FireRightBinding);
 	PlayerInputComponent->BindAxis(FireBinding);
+	PlayerInputComponent->BindAction(PickUpBinding, IE_Pressed, this, &ASafetyFirstPawn::PickUpPressed);
+	PlayerInputComponent->BindAction(PickUpBinding, IE_Released, this, &ASafetyFirstPawn::PickUpReleased);
 }
-
 
 void ASafetyFirstPawn::BeginPlay()
 {
@@ -100,10 +101,11 @@ void ASafetyFirstPawn::BeginPlay()
 	
 }
 
-void ASafetyFirstPawn::Tick(float DeltaSeconds)
+
+void ASafetyFirstPawn::Tick(float _fDt)
 {
-	Super::Tick(DeltaSeconds);
-	//UE_LOG(LogTemp, Warning, TEXT("test "));
+	Super::Tick(_fDt);
+
 	// Find movement direction
 	const float ForwardValue = GetInputAxisValue(MoveForwardBinding);
 	const float RightValue = GetInputAxisValue(MoveRightBinding);
@@ -123,7 +125,7 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 	FireDirComponent->SetWorldRotation(FireDirRotator);
 
 	
-	if (m_Weapon != nullptr)
+	if (m_Weapon.IsValid())
 	{
 		if (GetInputAxisValue(FireBinding) > 0.0f)
 		{
@@ -133,8 +135,11 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 				bool bWeaponEjected = m_Weapon->FireShot(m_vFireDirection);
 				if (bWeaponEjected)
 				{
+					FDetachmentTransformRules detachmentRules(/*InLocationRule*/EDetachmentRule::KeepWorld, /*InRotationRule*/EDetachmentRule::KeepWorld, /*InScaleRule*/EDetachmentRule::KeepWorld, /*bInCallModify*/true);
+					m_Weapon->DetachFromActor(detachmentRules);
+					m_Weapon->SetWeaponOwner(nullptr);
 					m_Weapon->RecoilLauncher(m_vFireDirection);
-					//m_Weapon = nullptr;
+					m_Weapon = nullptr;
 				}
 			}
 		}
@@ -148,7 +153,7 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 	const FVector MoveDirection = FVector(ForwardValue, RightValue, 0.f).GetClampedToMaxSize(1.0f);
 
 	// Calculate  movement
-	const FVector Movement = MoveDirection * MoveSpeed * DeltaSeconds;
+	const FVector Movement = MoveDirection * MoveSpeed * _fDt;
 
 	// If non-zero size, move this actor
 	FHitResult Hit(1.f);
@@ -160,14 +165,85 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 		const FVector Deflection = FVector::VectorPlaneProject(Movement, Normal2D) * (1.f - Hit.Time);
 		RootComponent->MoveComponent(Deflection, FireDirRotator, true);
 	}
+
+
+	if (m_WeaponPickup.IsValid())
+	{
+		if (m_WeaponPickup->CanBePickedUp() && m_bWantPickup)
+		{
+			RetrieveWeapon(m_WeaponPickup.Get());
+			m_WeaponPickup = nullptr;
+			m_bWantPickup = false;
+		}
+		else if (m_WeaponPickup->GetWeaponOwner() != nullptr)
+		{
+			//it has been picked up already
+			m_WeaponPickup = nullptr;
+		}
+	}
+
+
+	if (m_bWantPickup)
+	{
+		m_fPickupLifeSpan -= _fDt;
+		if (m_fPickupLifeSpan <= 0.0f)
+		{
+			m_bWantPickup = false;
+		}
+	}
+	
 }
 
 
 void ASafetyFirstPawn::RetrieveWeapon(ASafetyFirstWeapon* _weapon)
 {
-	m_Weapon = _weapon;
+	if (_weapon != nullptr)
+	{
+		m_Weapon = _weapon;
+		m_Weapon->SetWeaponOwner(this);
+		FAttachmentTransformRules transformRules(/*InLocationRule*/EAttachmentRule::KeepRelative, /*InRotationRule*/EAttachmentRule::SnapToTarget, /*InScaleRule*/EAttachmentRule::KeepWorld, /*bInWeldSimulatedBodies*/false);
+		m_Weapon->AttachToActor(this, transformRules);
+		m_Weapon->SetActorRelativeLocation(m_vWeaponAttachmentOffset);
+	}
+}
 
-	FAttachmentTransformRules transformRules(/*InLocationRule*/EAttachmentRule::KeepRelative, /*InRotationRule*/EAttachmentRule::SnapToTarget, /*InScaleRule*/EAttachmentRule::KeepWorld, /*bInWeldSimulatedBodies*/false);
-	m_Weapon->AttachToActor(this, transformRules);
-	m_Weapon->SetActorRelativeLocation(m_vWeaponAttachmentOffset);
+void ASafetyFirstPawn::PickUpPressed()
+{
+	if (!m_bPickupPressed)
+	{
+		m_bPickupPressed = true;
+		m_bWantPickup = true;
+		m_fPickupLifeSpan = m_fDurationOfPickupLifeSpan;
+	}
+}
+
+void ASafetyFirstPawn::PickUpReleased()
+{
+	m_bPickupPressed = false;
+	m_bWantPickup = true;
+}
+
+void ASafetyFirstPawn::NotifyActorBeginOverlap(AActor* _otherActor)
+{
+	Super::NotifyActorBeginOverlap(_otherActor);
+	if (ASafetyFirstWeapon* weapon = Cast<ASafetyFirstWeapon>(_otherActor))
+	{
+		if (weapon->GetWeaponOwner() == nullptr)
+		{
+			m_WeaponPickup = weapon;
+		}
+	}
+}
+
+
+void ASafetyFirstPawn::NotifyActorEndOverlap(AActor* _otherActor)
+{
+	Super::NotifyActorEndOverlap(_otherActor);
+	if (ASafetyFirstWeapon* weapon = Cast<ASafetyFirstWeapon>(_otherActor))
+	{
+		if (m_WeaponPickup.Get() == weapon)
+		{
+			m_WeaponPickup = nullptr;
+		}
+	}
 }
