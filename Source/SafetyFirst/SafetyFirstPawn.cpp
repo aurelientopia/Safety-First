@@ -65,7 +65,6 @@ ASafetyFirstPawn::ASafetyFirstPawn()
 	// Weapon
 	GunOffset = FVector(90.f, 0.f, 0.f);
 	FireRate = 0.1f;
-	bCanFire = true;
 
 
 }
@@ -96,6 +95,8 @@ void ASafetyFirstPawn::BeginPlay()
 			RetrieveWeapon(weapon);
 		}
 	}
+
+	m_vFireDirection = GetActorForwardVector();
 	
 }
 
@@ -112,21 +113,31 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 	// Create fire direction vector
 	const float FireForwardValue = GetInputAxisValue(FireForwardBinding);
 	const float FireRightValue = GetInputAxisValue(FireRightBinding);
-	if (FVector(FireForwardValue, FireRightValue, 0.f).SizeSquared() > 0.0f)
+	if (FVector(FireForwardValue, FireRightValue, 0.f).SizeSquared() > m_fDeadZoneRightStick * m_fDeadZoneRightStick)
 	{
-		m_vFireDirection = FVector(FireForwardValue, FireRightValue, 0.f);
+		m_vFireDirection = FVector(FireForwardValue, FireRightValue, 0.f).GetSafeNormal2D();
 	}
 	
 	FRotator FireDirRotator = m_vFireDirection.Rotation();
 
 	FireDirComponent->SetWorldRotation(FireDirRotator);
 
-	bool ShootButtonPressed = false;
-	if (GetInputAxisValue(FireBinding) > 0.0f)
+	
+	if (m_Weapon != nullptr)
 	{
-		ShootButtonPressed = true;
-		// Try and fire a shot
-		FireShot(m_vFireDirection);
+		if (GetInputAxisValue(FireBinding) > 0.0f)
+		{
+			if (!m_bHasFirePressed)
+			{
+				// Try and fire a shot
+				m_Weapon->FireShot(m_vFireDirection);
+				m_bHasFirePressed = true;
+			}
+		}
+		else
+		{
+			m_bHasFirePressed = false;
+		}
 	}	
 
 	// Clamp max size so that (X=1, Y=1) doesn't cause faster movement in diagonal directions
@@ -136,57 +147,17 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 	const FVector Movement = MoveDirection * MoveSpeed * DeltaSeconds;
 
 	// If non-zero size, move this actor
-	if (Movement.SizeSquared() > 0.0f)
-	{
-		FHitResult Hit(1.f);
-		RootComponent->MoveComponent(Movement, FireDirRotator, true, &Hit);
+	FHitResult Hit(1.f);
+	RootComponent->MoveComponent(Movement, FireDirRotator, true, &Hit);
 
-		if (Hit.IsValidBlockingHit())
-		{
-			const FVector Normal2D = Hit.Normal.GetSafeNormal2D();
-			const FVector Deflection = FVector::VectorPlaneProject(Movement, Normal2D) * (1.f - Hit.Time);
-			RootComponent->MoveComponent(Deflection, FireDirRotator, true);
-		}
+	if (Hit.IsValidBlockingHit())
+	{
+		const FVector Normal2D = Hit.Normal.GetSafeNormal2D();
+		const FVector Deflection = FVector::VectorPlaneProject(Movement, Normal2D) * (1.f - Hit.Time);
+		RootComponent->MoveComponent(Deflection, FireDirRotator, true);
 	}
 }
 
-void ASafetyFirstPawn::FireShot(FVector FireDirection)
-{
-	// If it's ok to fire again
-	if (bCanFire == true)
-	{
-		// If we are pressing fire stick in a direction
-		if (FireDirection.SizeSquared() > 0.0f)
-		{
-			const FRotator FireRotation = FireDirection.Rotation();
-			// Spawn projectile at an offset from this pawn
-			const FVector SpawnLocation = GetActorLocation() + FireRotation.RotateVector(GunOffset);
-
-			UWorld* const World = GetWorld();
-			if (World != NULL)
-			{
-				// spawn the projectile
-				World->SpawnActor<ASafetyFirstProjectile>(SpawnLocation, FireRotation);
-			}
-
-			bCanFire = false;
-			World->GetTimerManager().SetTimer(TimerHandle_ShotTimerExpired, this, &ASafetyFirstPawn::ShotTimerExpired, FireRate);
-
-			// try and play the sound if specified
-			if (FireSound != nullptr)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
-			}
-
-			bCanFire = false;
-		}
-	}
-}
-
-void ASafetyFirstPawn::ShotTimerExpired()
-{
-	bCanFire = true;
-}
 
 void ASafetyFirstPawn::RetrieveWeapon(ASafetyFirstWeapon* _weapon)
 {
