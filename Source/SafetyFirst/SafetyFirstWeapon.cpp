@@ -60,10 +60,15 @@ void ASafetyFirstWeapon::Tick(float _fDt)
 	{
 
 		float fCurRecoilRatio = (m_fRecoilDuration - m_fRecoilTimeLeft) / m_fRecoilDuration;
-		FMath::Clamp(fCurRecoilRatio, 0.0f, 1.0f);	
+		fCurRecoilRatio = FMath::Clamp(fCurRecoilRatio, 0.0f, 1.0f);
 		m_fRecoilTimeLeft -= _fDt;
 		float fNextRecoilRatio = (m_fRecoilDuration - m_fRecoilTimeLeft) / m_fRecoilDuration;
-		FMath::Clamp(fNextRecoilRatio, 0.0f, 1.0f);
+		fNextRecoilRatio = FMath::Clamp(fNextRecoilRatio, 0.0f, 1.0f);
+
+		if (FMath::IsNearlyEqual(fNextRecoilRatio, 1.0f))
+		{
+			m_bRecoiling = false;
+		}
 
 		if (m_RecoilDynamic != nullptr)
 		{
@@ -75,6 +80,10 @@ void ASafetyFirstWeapon::Tick(float _fDt)
 		FVector vFrameMovement = ((fNextRecoilRatio - fCurRecoilRatio) * m_fRecoilDistance) * m_vRecoilDirection;
 
 		SetActorLocation(GetActorLocation() + vFrameMovement);
+
+		FRotator currentRotation = GetActorRotation();
+		currentRotation.Yaw += m_fRecoilRotationRatePerSec * _fDt;
+		SetActorRotation(currentRotation);
 
 
 		if (!m_bCanBePickedUp && m_fRecoilDuration - m_fRecoilTimeLeft > m_fDurationAfterWhichWeCanPickUpWeapon)

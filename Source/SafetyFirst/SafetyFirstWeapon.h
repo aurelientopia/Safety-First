@@ -65,6 +65,9 @@ public :
 	float m_fRecoilDuration = 1.0f;
 
 	UPROPERTY(Category = Recoil, EditAnywhere, BlueprintReadOnly)
+	float m_fRecoilRotationRatePerSec = 1080.0f;
+
+	UPROPERTY(Category = Recoil, EditAnywhere, BlueprintReadOnly)
 	float m_fDurationAfterWhichWeCanPickUpWeapon = 0.8f;
 	
 public:
