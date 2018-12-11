@@ -37,6 +37,9 @@ public :
 	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
 	class USoundBase* m_FireSound;
 
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+	float RecoilPower = 5000.0f;
+
 public:
 	ASafetyFirstWeapon();
 
@@ -49,5 +52,7 @@ public:
 	bool/*bEject*/ FireShot(FVector _vFireDirection);
 
 	void RecoilLauncher(FVector _vFireDirection);
+
+	float GetRecoilPower() { return RecoilPower; }
 };
 
