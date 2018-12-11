@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "SafetyFirstProjectile.h"
 #include "Components/BoxComponent.h"
+#include "Components/SphereComponent.h"
 #include "SafetyFirstWeapon.generated.h"
 
 
@@ -30,6 +31,10 @@ private:
 	/** scene root component */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
 	UBoxComponent* m_TriggerPickupComponent;
+
+	/** scene root component */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
+	USphereComponent* m_CollisionComponent;
 
 	int32 m_iNbMaxBullets = 0;
 
@@ -65,7 +70,7 @@ public :
 	float m_fRecoilDuration = 1.0f;
 
 	UPROPERTY(Category = Recoil, EditAnywhere, BlueprintReadOnly)
-	float m_fRecoilRotationRatePerSec = 1080.0f;
+	float m_fRecoilTotalRotationDegree= 1500.0f;
 
 	UPROPERTY(Category = Recoil, EditAnywhere, BlueprintReadOnly)
 	float m_fDurationAfterWhichWeCanPickUpWeapon = 0.8f;

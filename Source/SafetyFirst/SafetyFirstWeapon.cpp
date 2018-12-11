@@ -25,6 +25,9 @@ ASafetyFirstWeapon::ASafetyFirstWeapon()
 	m_TriggerPickupComponent->SetupAttachment(RootComponent);
 	m_TriggerPickupComponent->SetCollisionProfileName("NoCollision");
 
+	m_CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
+	m_CollisionComponent->SetupAttachment(RootComponent);
+	m_CollisionComponent->SetCollisionProfileName("NoCollision");
 
 	/*
 	// Use a ProjectileMovementComponent to govern this projectile's movement
@@ -79,10 +82,12 @@ void ASafetyFirstWeapon::Tick(float _fDt)
 
 		FVector vFrameMovement = ((fNextRecoilRatio - fCurRecoilRatio) * m_fRecoilDistance) * m_vRecoilDirection;
 
+
+
 		SetActorLocation(GetActorLocation() + vFrameMovement);
 
 		FRotator currentRotation = GetActorRotation();
-		currentRotation.Yaw += m_fRecoilRotationRatePerSec * _fDt;
+		currentRotation.Yaw += m_fRecoilTotalRotationDegree * (fNextRecoilRatio - fCurRecoilRatio);
 		SetActorRotation(currentRotation);
 
 
