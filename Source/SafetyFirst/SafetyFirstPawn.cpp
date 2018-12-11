@@ -17,6 +17,8 @@ const FName ASafetyFirstPawn::MoveForwardBinding("MoveForward");
 const FName ASafetyFirstPawn::MoveRightBinding("MoveRight");
 const FName ASafetyFirstPawn::FireForwardBinding("FireForward");
 const FName ASafetyFirstPawn::FireRightBinding("FireRight");
+const FName ASafetyFirstPawn::FireBinding("Fire");
+
 
 ASafetyFirstPawn::ASafetyFirstPawn()
 {	
@@ -27,6 +29,19 @@ ASafetyFirstPawn::ASafetyFirstPawn()
 	ShipMeshComponent->SetCollisionProfileName(UCollisionProfile::Pawn_ProfileName);
 	ShipMeshComponent->SetStaticMesh(ShipMesh.Object);
 	
+
+	// Create the fire Direction component
+	FireDirComponent = CreateDefaultSubobject<USceneComponent>(TEXT("FireDir"));
+	
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> FireDirMesh(TEXT("/Game/StarterContent/Shapes/Shape_Cone.Shape_Cone"));
+	// Create the fire direction mesh component
+	FireDirMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FireDirMesh"));
+	FireDirMeshComponent->SetupAttachment(FireDirComponent);
+	FireDirMeshComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+	FireDirMeshComponent->SetStaticMesh(FireDirMesh.Object);
+
+
 	// Cache our sound effect
 	static ConstructorHelpers::FObjectFinder<USoundBase> FireAudio(TEXT("/Game/TwinStick/Audio/TwinStickFire.TwinStickFire"));
 	FireSound = FireAudio.Object;
@@ -61,10 +76,12 @@ void ASafetyFirstPawn::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	PlayerInputComponent->BindAxis(MoveRightBinding);
 	PlayerInputComponent->BindAxis(FireForwardBinding);
 	PlayerInputComponent->BindAxis(FireRightBinding);
+	PlayerInputComponent->BindAxis(FireBinding);
 }
 
 void ASafetyFirstPawn::Tick(float DeltaSeconds)
 {
+	//UE_LOG(LogTemp, Warning, TEXT("test "));
 	// Find movement direction
 	const float ForwardValue = GetInputAxisValue(MoveForwardBinding);
 	const float RightValue = GetInputAxisValue(MoveRightBinding);
@@ -93,10 +110,25 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 	// Create fire direction vector
 	const float FireForwardValue = GetInputAxisValue(FireForwardBinding);
 	const float FireRightValue = GetInputAxisValue(FireRightBinding);
-	const FVector FireDirection = FVector(FireForwardValue, FireRightValue, 0.f);
+	if (FVector(FireForwardValue, FireRightValue, 0.f).SizeSquared() > 0.0f)
+	{
+		m_vFireDirection = FVector(FireForwardValue, FireRightValue, 0.f);
+	}
+	
+	FRotator FireDirRotator = m_vFireDirection.Rotation();
 
-	// Try and fire a shot
-	FireShot(FireDirection);
+	FireDirComponent->SetWorldRotation(FireDirRotator);
+
+	bool ShootButtonPressed = false;
+	if (GetInputAxisValue(FireBinding) > 0.0f)
+	{
+		ShootButtonPressed = true;
+		// Try and fire a shot
+		FireShot(m_vFireDirection);
+	}
+
+
+	
 }
 
 void ASafetyFirstPawn::FireShot(FVector FireDirection)
