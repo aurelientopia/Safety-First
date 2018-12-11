@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "SafetyFirstProjectile.h"
 #include "Components/BoxComponent.h"
 #include "SafetyFirstWeapon.generated.h"
 
@@ -22,6 +23,9 @@ private:
 	/** scene root component */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
 	USceneComponent* m_FirePositionStartComponent;
+
+	UPROPERTY(EditAnywhere, meta = (Category = "Safety First ", DisplayName = "projectile class"))
+	TSubclassOf<ASafetyFirstProjectile> m_ProjectileClass;
 
 	/** scene root component */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
@@ -47,6 +51,9 @@ public :
 	/** Sound to play each time we fire */
 	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
 	class USoundBase* m_FireSound;
+
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+	float RecoilPower = 5000.0f;
 
 	UPROPERTY(Category = Recoil, EditAnywhere, BlueprintReadOnly)
 	UCurveFloat* m_RecoilDynamic = nullptr;
@@ -75,6 +82,7 @@ public:
 
 	void RecoilLauncher(FVector _vFireDirection);
 
+	float GetRecoilPower() { return RecoilPower; }
 	bool CanBePickedUp() { return m_bCanBePickedUp; }
 
 	void SetWeaponOwner(AActor* _weaponOwner) { m_WeaponOwner = _weaponOwner; }

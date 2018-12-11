@@ -95,10 +95,10 @@ bool ASafetyFirstWeapon::FireShot(FVector _vFireDirection)
 		const FVector vSpawnLocation = m_FirePositionStartComponent->GetComponentLocation();
 
 		UWorld* const World = GetWorld();
-		if (World != NULL)
+		if (World != NULL && m_ProjectileClass != nullptr)
 		{
 			// spawn the projectile
-			World->SpawnActor<ASafetyFirstProjectile>(vSpawnLocation, FireRotation);
+			World->SpawnActor<ASafetyFirstProjectile>(m_ProjectileClass, vSpawnLocation, FireRotation);
 		}
 
 		// try and play the sound if specified
