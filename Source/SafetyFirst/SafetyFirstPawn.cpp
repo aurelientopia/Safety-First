@@ -129,9 +129,13 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 		{
 			if (!m_bHasFirePressed)
 			{
-				// Try and fire a shot
-				m_Weapon->FireShot(m_vFireDirection);
 				m_bHasFirePressed = true;
+				bool bWeaponEjected = m_Weapon->FireShot(m_vFireDirection);
+				if (bWeaponEjected)
+				{
+					m_Weapon->RecoilLauncher(m_vFireDirection);
+					m_Weapon = nullptr;
+				}
 			}
 		}
 		else

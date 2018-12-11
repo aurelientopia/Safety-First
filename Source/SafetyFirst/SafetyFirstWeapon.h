@@ -43,6 +43,8 @@ public:
 
 
 	/* Fire a shot in the specified direction */
-	void FireShot(FVector _vFireDirection);
+	bool/*bEject*/ FireShot(FVector _vFireDirection);
+
+	void RecoilLauncher(FVector _vFireDirection);
 };
 

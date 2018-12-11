@@ -33,6 +33,8 @@ ASafetyFirstWeapon::ASafetyFirstWeapon()
 	// Die after 3 seconds by default
 	InitialLifeSpan = 3.0f;
 	*/
+
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ASafetyFirstWeapon::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -47,8 +49,9 @@ void ASafetyFirstWeapon::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 }
 
 
-void ASafetyFirstWeapon::FireShot(FVector _vFireDirection)
+bool ASafetyFirstWeapon::FireShot(FVector _vFireDirection)
 {
+	bool bEject = false;
 	// If we are pressing fire stick in a direction
 	if (_vFireDirection.SizeSquared() > 0.0f)
 	{
@@ -68,5 +71,15 @@ void ASafetyFirstWeapon::FireShot(FVector _vFireDirection)
 		{
 			UGameplayStatics::PlaySoundAtLocation(this, m_FireSound, GetActorLocation());
 		}
+
+		bEject = true;
 	}
+
+
+	return bEject;
+}
+
+void ASafetyFirstWeapon::RecoilLauncher(FVector _vFireDirection)
+{
+
 }
