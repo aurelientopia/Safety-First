@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "SafetyFirstWeapon.h"
+
 #include "SafetyFirstPawn.generated.h"
 
 UCLASS(Blueprintable)
@@ -50,7 +52,11 @@ public:
 	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
 	class USoundBase* FireSound;
 
+	UPROPERTY(EditAnywhere, meta = (DisplayName = "weapon class"))
+	TSubclassOf<ASafetyFirstWeapon> m_WeaponClass;
+
 	// Begin Actor Interface
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End Actor Interface
@@ -78,6 +84,9 @@ private:
 
 	FVector m_vFireDirection;
 
+	UPROPERTY()
+	ASafetyFirstWeapon* m_Weapon;
+
 public:
 	/** Returns ShipMeshComponent subobject **/
 	FORCEINLINE class UStaticMeshComponent* GetShipMeshComponent() const { return ShipMeshComponent; }
@@ -85,5 +94,9 @@ public:
 	FORCEINLINE class UCameraComponent* GetCameraComponent() const { return CameraComponent; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+
+private:
+
+	void RetrieveWeapon(ASafetyFirstWeapon* _weapon);
 };
 

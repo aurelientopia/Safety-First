@@ -20,6 +20,7 @@ const FName ASafetyFirstPawn::FireRightBinding("FireRight");
 const FName ASafetyFirstPawn::FireBinding("Fire");
 
 
+
 ASafetyFirstPawn::ASafetyFirstPawn()
 {	
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> ShipMesh(TEXT("/Game/TwinStick/Meshes/TwinStickUFO.TwinStickUFO"));
@@ -65,6 +66,8 @@ ASafetyFirstPawn::ASafetyFirstPawn()
 	GunOffset = FVector(90.f, 0.f, 0.f);
 	FireRate = 0.1f;
 	bCanFire = true;
+
+
 }
 
 void ASafetyFirstPawn::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -77,6 +80,23 @@ void ASafetyFirstPawn::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	PlayerInputComponent->BindAxis(FireForwardBinding);
 	PlayerInputComponent->BindAxis(FireRightBinding);
 	PlayerInputComponent->BindAxis(FireBinding);
+}
+
+
+void ASafetyFirstPawn::BeginPlay()
+{
+	Super::BeginPlay();
+	if (m_WeaponClass != nullptr)
+	{
+		FActorSpawnParameters spawnInfo;
+		spawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		ASafetyFirstWeapon* weapon = GetWorld()->SpawnActor<ASafetyFirstWeapon>(m_WeaponClass, GetActorTransform(), spawnInfo);
+		if (weapon != nullptr)
+		{
+			RetrieveWeapon(weapon);
+		}
+	}
+	
 }
 
 void ASafetyFirstPawn::Tick(float DeltaSeconds)
@@ -125,10 +145,7 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 		ShootButtonPressed = true;
 		// Try and fire a shot
 		FireShot(m_vFireDirection);
-	}
-
-
-	
+	}	
 }
 
 void ASafetyFirstPawn::FireShot(FVector FireDirection)
@@ -169,3 +186,10 @@ void ASafetyFirstPawn::ShotTimerExpired()
 	bCanFire = true;
 }
 
+void ASafetyFirstPawn::RetrieveWeapon(ASafetyFirstWeapon* _weapon)
+{
+	m_Weapon = _weapon;
+
+	FAttachmentTransformRules transformRules(EAttachmentRule::SnapToTarget, /*bInWeldSimulatedBodies*/false);
+	m_Weapon->AttachToActor(this, transformRules);
+}
