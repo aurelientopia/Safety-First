@@ -107,26 +107,7 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 	const float ForwardValue = GetInputAxisValue(MoveForwardBinding);
 	const float RightValue = GetInputAxisValue(MoveRightBinding);
 
-	// Clamp max size so that (X=1, Y=1) doesn't cause faster movement in diagonal directions
-	const FVector MoveDirection = FVector(ForwardValue, RightValue, 0.f).GetClampedToMaxSize(1.0f);
-
-	// Calculate  movement
-	const FVector Movement = MoveDirection * MoveSpeed * DeltaSeconds;
-
-	// If non-zero size, move this actor
-	if (Movement.SizeSquared() > 0.0f)
-	{
-		const FRotator NewRotation = Movement.Rotation();
-		FHitResult Hit(1.f);
-		RootComponent->MoveComponent(Movement, NewRotation, true, &Hit);
-		
-		if (Hit.IsValidBlockingHit())
-		{
-			const FVector Normal2D = Hit.Normal.GetSafeNormal2D();
-			const FVector Deflection = FVector::VectorPlaneProject(Movement, Normal2D) * (1.f - Hit.Time);
-			RootComponent->MoveComponent(Deflection, NewRotation, true);
-		}
-	}
+	
 	
 	// Create fire direction vector
 	const float FireForwardValue = GetInputAxisValue(FireForwardBinding);
@@ -147,6 +128,26 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 		// Try and fire a shot
 		FireShot(m_vFireDirection);
 	}	
+
+	// Clamp max size so that (X=1, Y=1) doesn't cause faster movement in diagonal directions
+	const FVector MoveDirection = FVector(ForwardValue, RightValue, 0.f).GetClampedToMaxSize(1.0f);
+
+	// Calculate  movement
+	const FVector Movement = MoveDirection * MoveSpeed * DeltaSeconds;
+
+	// If non-zero size, move this actor
+	if (Movement.SizeSquared() > 0.0f)
+	{
+		FHitResult Hit(1.f);
+		RootComponent->MoveComponent(Movement, FireDirRotator, true, &Hit);
+
+		if (Hit.IsValidBlockingHit())
+		{
+			const FVector Normal2D = Hit.Normal.GetSafeNormal2D();
+			const FVector Deflection = FVector::VectorPlaneProject(Movement, Normal2D) * (1.f - Hit.Time);
+			RootComponent->MoveComponent(Deflection, FireDirRotator, true);
+		}
+	}
 }
 
 void ASafetyFirstPawn::FireShot(FVector FireDirection)
@@ -191,6 +192,7 @@ void ASafetyFirstPawn::RetrieveWeapon(ASafetyFirstWeapon* _weapon)
 {
 	m_Weapon = _weapon;
 
-	FAttachmentTransformRules transformRules(EAttachmentRule::SnapToTarget, /*bInWeldSimulatedBodies*/false);
+	FAttachmentTransformRules transformRules(/*InLocationRule*/EAttachmentRule::KeepRelative, /*InRotationRule*/EAttachmentRule::SnapToTarget, /*InScaleRule*/EAttachmentRule::KeepWorld, /*bInWeldSimulatedBodies*/false);
 	m_Weapon->AttachToActor(this, transformRules);
+	m_Weapon->SetActorRelativeLocation(m_vWeaponAttachmentOffset);
 }

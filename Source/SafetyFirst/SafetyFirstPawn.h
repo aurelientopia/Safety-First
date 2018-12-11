@@ -52,8 +52,11 @@ public:
 	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
 	class USoundBase* FireSound;
 
-	UPROPERTY(EditAnywhere, meta = (DisplayName = "weapon class"))
+	UPROPERTY(EditAnywhere, meta = (Category ="Safetry First ", DisplayName = "weapon class"))
 	TSubclassOf<ASafetyFirstWeapon> m_WeaponClass;
+
+	UPROPERTY(EditAnywhere, meta = (Category = "Safetry First ", DisplayName = "weapon attachmentOffset"))
+	FVector m_vWeaponAttachmentOffset = FVector(2.0f, 0.0f, 0.0f);
 
 	// Begin Actor Interface
 	virtual void BeginPlay() override;
