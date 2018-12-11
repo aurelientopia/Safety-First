@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "SafetyFirstWeapon.h"
+
 #include "SafetyFirstPawn.generated.h"
 
 UCLASS(Blueprintable)
@@ -50,17 +52,21 @@ public:
 	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
 	class USoundBase* FireSound;
 
+	UPROPERTY(EditAnywhere, meta = (Category ="Safety First ", DisplayName = "weapon class"))
+	TSubclassOf<ASafetyFirstWeapon> m_WeaponClass;
+
+	UPROPERTY(EditAnywhere, meta = (Category = "Safety First ", DisplayName = "weapon attachmentOffset"))
+	FVector m_vWeaponAttachmentOffset = FVector(2.0f, 0.0f, 0.0f);
+
+	UPROPERTY(EditAnywhere, meta = (Category = "Safety First ", DisplayName = "deadZone right stick"))
+	float m_fDeadZoneRightStick = 0.2f;
+
 	// Begin Actor Interface
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End Actor Interface
-
-	/* Fire a shot in the specified direction */
-	void FireShot(FVector FireDirection);
-
-	/* Handler for the fire timer expiry */
-	void ShotTimerExpired();
-
+	
 	// Static names for axis bindings
 	static const FName MoveForwardBinding;
 	static const FName MoveRightBinding;
@@ -70,13 +76,12 @@ public:
 
 private:
 
-	/* Flag to control firing  */
-	uint32 bCanFire : 1;
-
-	/** Handle for efficient management of ShotTimerExpired timer */
-	FTimerHandle TimerHandle_ShotTimerExpired;
-
 	FVector m_vFireDirection;
+
+	UPROPERTY()
+	ASafetyFirstWeapon* m_Weapon;
+
+	bool m_bHasFirePressed = false;
 
 public:
 	/** Returns ShipMeshComponent subobject **/
@@ -85,5 +90,9 @@ public:
 	FORCEINLINE class UCameraComponent* GetCameraComponent() const { return CameraComponent; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+
+private:
+
+	void RetrieveWeapon(ASafetyFirstWeapon* _weapon);
 };
 
