@@ -26,13 +26,13 @@ class ASafetyFirstPawn : public APawn
 	class UStaticMeshComponent* FireDirMeshComponent;
 
 	/** The camera */
-	UPROPERTY(Category = Camera, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* CameraComponent;
+	//UPROPERTY(Category = Camera, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	//class UCameraComponent* CameraComponent;
 
 	/** Camera boom positioning the camera above the character */
-	UPROPERTY(Category = Camera, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
-
+	//UPROPERTY(Category = Camera, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	//class USpringArmComponent* CameraBoom;
+	
 public:
 	ASafetyFirstPawn();
 
@@ -48,6 +48,9 @@ public:
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 	float MoveSpeed;
 
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+	float MoveSpeedLerp = 0.2f;
+
 	/** Sound to play each time we fire */
 	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
 	class USoundBase* FireSound;
@@ -60,6 +63,10 @@ public:
 
 	UPROPERTY(EditAnywhere, meta = (Category = "Safety First ", DisplayName = "deadZone right stick"))
 	float m_fDeadZoneRightStick = 0.2f;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Spawn")
+	void BPE_Fire(ASafetyFirstWeapon* _WeaponLaunched, FVector _vFireDirection);
+
 
 	// Begin Actor Interface
 	virtual void BeginPlay() override;
@@ -83,13 +90,15 @@ private:
 
 	bool m_bHasFirePressed = false;
 
+	FVector m_Movement;
+
 public:
 	/** Returns ShipMeshComponent subobject **/
 	FORCEINLINE class UStaticMeshComponent* GetShipMeshComponent() const { return ShipMeshComponent; }
 	/** Returns CameraComponent subobject **/
-	FORCEINLINE class UCameraComponent* GetCameraComponent() const { return CameraComponent; }
+	//FORCEINLINE class UCameraComponent* GetCameraComponent() const { return CameraComponent; }
 	/** Returns CameraBoom subobject **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	//FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 
 private:
 

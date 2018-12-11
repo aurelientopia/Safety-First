@@ -48,17 +48,17 @@ ASafetyFirstPawn::ASafetyFirstPawn()
 	FireSound = FireAudio.Object;
 
 	// Create a camera boom...
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->bAbsoluteRotation = true; // Don't want arm to rotate when ship does
-	CameraBoom->TargetArmLength = 1200.f;
-	CameraBoom->RelativeRotation = FRotator(-80.f, 0.f, 0.f);
-	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
+	//CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	//CameraBoom->SetupAttachment(RootComponent);
+	//CameraBoom->bAbsoluteRotation = true; // Don't want arm to rotate when ship does
+	//CameraBoom->TargetArmLength = 1200.f;
+	//CameraBoom->RelativeRotation = FRotator(-80.f, 0.f, 0.f);
+	//CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
 
 	// Create a camera...
-	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
-	CameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	CameraComponent->bUsePawnControlRotation = false;	// Camera does not rotate relative to arm
+	//CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
+	//CameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	//CameraComponent->bUsePawnControlRotation = false;	// Camera does not rotate relative to arm
 
 	// Movement
 	MoveSpeed = 1000.0f;
@@ -122,6 +122,7 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 
 	FireDirComponent->SetWorldRotation(FireDirRotator);
 
+	FVector vRecoil = FVector::ZeroVector;
 	
 	if (m_Weapon != nullptr)
 	{
@@ -133,8 +134,11 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 				bool bWeaponEjected = m_Weapon->FireShot(m_vFireDirection);
 				if (bWeaponEjected)
 				{
+					BPE_Fire(m_Weapon, m_vFireDirection);
 					m_Weapon->RecoilLauncher(m_vFireDirection);
 					//m_Weapon = nullptr;
+
+					vRecoil = m_vFireDirection * m_Weapon->GetRecoilPower()*-1.0f;
 				}
 			}
 		}
@@ -148,16 +152,18 @@ void ASafetyFirstPawn::Tick(float DeltaSeconds)
 	const FVector MoveDirection = FVector(ForwardValue, RightValue, 0.f).GetClampedToMaxSize(1.0f);
 
 	// Calculate  movement
-	const FVector Movement = MoveDirection * MoveSpeed * DeltaSeconds;
+	m_Movement = FMath::Lerp(m_Movement, (MoveDirection * MoveSpeed + vRecoil) * DeltaSeconds, MoveSpeedLerp);
+
+	
 
 	// If non-zero size, move this actor
 	FHitResult Hit(1.f);
-	RootComponent->MoveComponent(Movement, FireDirRotator, true, &Hit);
+	RootComponent->MoveComponent(m_Movement, FireDirRotator, true, &Hit);
 
 	if (Hit.IsValidBlockingHit())
 	{
 		const FVector Normal2D = Hit.Normal.GetSafeNormal2D();
-		const FVector Deflection = FVector::VectorPlaneProject(Movement, Normal2D) * (1.f - Hit.Time);
+		const FVector Deflection = FVector::VectorPlaneProject(m_Movement, Normal2D) * (1.f - Hit.Time);
 		RootComponent->MoveComponent(Deflection, FireDirRotator, true);
 	}
 }
