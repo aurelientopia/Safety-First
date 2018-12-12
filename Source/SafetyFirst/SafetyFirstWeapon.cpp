@@ -18,8 +18,16 @@ ASafetyFirstWeapon::ASafetyFirstWeapon()
 	RootComponent = m_RootSceneComponent;
 
 
-	m_FirePositionStartComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Fire postition"));
+	m_FirePositionStartComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Fire position"));
 	m_FirePositionStartComponent->SetupAttachment(RootComponent);
+
+	m_TriggerPickupComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("Trigger pickup"));
+	m_TriggerPickupComponent->SetupAttachment(RootComponent);
+	m_TriggerPickupComponent->SetCollisionProfileName("NoCollision");
+
+	m_CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
+	m_CollisionComponent->SetupAttachment(RootComponent);
+	m_CollisionComponent->SetCollisionProfileName("NoCollision");
 
 	/*
 	// Use a ProjectileMovementComponent to govern this projectile's movement
@@ -48,6 +56,47 @@ void ASafetyFirstWeapon::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 	Destroy();
 }
 
+
+void ASafetyFirstWeapon::Tick(float _fDt)
+{
+	if (m_bRecoiling)
+	{
+
+		float fCurRecoilRatio = (m_fRecoilDuration - m_fRecoilTimeLeft) / m_fRecoilDuration;
+		fCurRecoilRatio = FMath::Clamp(fCurRecoilRatio, 0.0f, 1.0f);
+		m_fRecoilTimeLeft -= _fDt;
+		float fNextRecoilRatio = (m_fRecoilDuration - m_fRecoilTimeLeft) / m_fRecoilDuration;
+		fNextRecoilRatio = FMath::Clamp(fNextRecoilRatio, 0.0f, 1.0f);
+
+		if (FMath::IsNearlyEqual(fNextRecoilRatio, 1.0f))
+		{
+			m_bRecoiling = false;
+		}
+
+		if (m_RecoilDynamic != nullptr)
+		{
+			fCurRecoilRatio = FMath::Clamp(m_RecoilDynamic->GetFloatValue(fCurRecoilRatio), 0.0f, 1.0f);
+			fNextRecoilRatio = FMath::Clamp(m_RecoilDynamic->GetFloatValue(fNextRecoilRatio), 0.0f, 1.0f);
+		}
+
+
+		FVector vFrameMovement = ((fNextRecoilRatio - fCurRecoilRatio) * m_fRecoilDistance) * m_vRecoilDirection;
+
+
+
+		SetActorLocation(GetActorLocation() + vFrameMovement);
+
+		FRotator currentRotation = GetActorRotation();
+		currentRotation.Yaw += m_fRecoilTotalRotationDegree * (fNextRecoilRatio - fCurRecoilRatio);
+		SetActorRotation(currentRotation);
+
+
+		if (!m_bCanBePickedUp && m_fRecoilDuration - m_fRecoilTimeLeft > m_fDurationAfterWhichWeCanPickUpWeapon)
+		{
+			m_bCanBePickedUp = true;
+		}
+	}
+}
 
 bool ASafetyFirstWeapon::FireShot(FVector _vFireDirection)
 {
@@ -81,5 +130,9 @@ bool ASafetyFirstWeapon::FireShot(FVector _vFireDirection)
 
 void ASafetyFirstWeapon::RecoilLauncher(FVector _vFireDirection)
 {
-
+	m_bRecoiling = true;
+	m_vRecoilDirection = (_vFireDirection * (-1.0f)).GetSafeNormal2D();
+	m_fRecoilTimeLeft = m_fRecoilDuration;
+	m_bCanBePickedUp = false;
+	m_TriggerPickupComponent->SetCollisionProfileName("Trigger");
 }
